@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.WindowManager
 
 class MainActivity : AppCompatActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
