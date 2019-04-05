@@ -44,33 +44,59 @@ class Particle {
             val xDelta = xOrbit - xPosition
             val yDelta = yOrbit - yPosition
 
-            if (sqrt(xDelta * xDelta + yDelta * yDelta) <= rOrbit + baseVelocity / 3) {
-                // Within orbit radius, travel along orbit
-                val currentTheta = atan2(yDelta, xDelta)
-                val theta = baseVelocity / rOrbit
-
-                xPosition = xOrbit + rOrbit * cos(currentTheta + theta)
-                yPosition = yOrbit + rOrbit * sin(currentTheta + theta)
+            if (abs(sqrt(xDelta * xDelta + yDelta * yDelta) - rOrbit) <= baseVelocity / 2) {
+                orbit(xDelta, yDelta)
             } else {
-                // Travel along a straight line path to the orbit point
-                val theta = atan2(yDelta, xDelta)
-                xPosition += baseVelocity * cos(theta)
-                yPosition += baseVelocity * sin(theta)
+                travelToOrbit(xDelta, yDelta)
             }
         } else {
-            // Continue in a straight trajectory unless the edge of the screen is hit
-            if (xPosition > screenWidth - r || xPosition < r) {
-                xVelocity *= -1
-            }
-
-            if (yPosition > screenHeight - r || yPosition < r) {
-                yVelocity *= -1
-            }
-
-            xPosition += xVelocity
-            yPosition += yVelocity
+            continueStraight()
         }
     }
+
+    /**
+     * Travel along orbit path
+     */
+    private fun orbit(xDelta: Float, yDelta: Float) {
+        val currentTheta = atan2(-yDelta, -xDelta)
+        val theta = baseVelocity / rOrbit
+
+        xPosition = xOrbit + rOrbit * cos(currentTheta + theta)
+        yPosition = yOrbit + rOrbit * sin(currentTheta + theta)
+    }
+
+    /**
+     * Travel along a straight line path to the orbit path
+     */
+    private fun travelToOrbit(xDelta: Float, yDelta: Float) {
+        val theta = atan2(yDelta, xDelta)
+
+        // If particle is within the orbit radius, travel outward
+        if (abs(sqrt(xDelta * xDelta + yDelta * yDelta)) <= rOrbit) {
+            xPosition -= baseVelocity * cos(theta)
+            yPosition -= baseVelocity * sin(theta)
+        } else {
+            xPosition += baseVelocity * cos(theta)
+            yPosition += baseVelocity * sin(theta)
+        }
+    }
+
+    /**
+     * Continue in a straight trajectory unless the edge of the screen is hit
+     */
+    private fun continueStraight() {
+        if (xPosition > screenWidth - r || xPosition < r) {
+            xVelocity *= -1
+        }
+
+        if (yPosition > screenHeight - r || yPosition < r) {
+            yVelocity *= -1
+        }
+
+        xPosition += xVelocity
+        yPosition += yVelocity
+    }
+
 
     fun startOrbit(x: Float, y: Float) {
         if (!inOrbit) {
