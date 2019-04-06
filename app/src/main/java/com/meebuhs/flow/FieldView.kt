@@ -12,7 +12,7 @@ class FieldView(context: Context, attributes: AttributeSet) : SurfaceView(contex
 
     private val thread: FieldThread
     private val particles: ArrayList<Particle>
-    private val clickActionTimeThreshold = 200
+    private val clickActionTimeThreshold = 100
 
     init {
         holder.addCallback(this)
@@ -72,7 +72,11 @@ class FieldView(context: Context, attributes: AttributeSet) : SurfaceView(contex
             MotionEvent.ACTION_DOWN -> {
                 lastTouchDown = System.currentTimeMillis()
             }
-            MotionEvent.ACTION_MOVE -> setOrbits(x, y)
+            MotionEvent.ACTION_MOVE -> {
+                if (System.currentTimeMillis() - lastTouchDown > clickActionTimeThreshold) {
+                    setOrbits(x, y)
+                }
+            }
             MotionEvent.ACTION_UP -> {
                 if (System.currentTimeMillis() - lastTouchDown < clickActionTimeThreshold) {
                     performClick()

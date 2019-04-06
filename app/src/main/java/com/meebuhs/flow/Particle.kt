@@ -2,10 +2,15 @@ package com.meebuhs.flow
 
 import android.content.res.Resources
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import java.util.concurrent.ThreadLocalRandom
-import kotlin.math.*
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
+
 
 class Particle {
     private var r: Float = 5f
@@ -23,20 +28,27 @@ class Particle {
 
     private val screenWidth = Resources.getSystem().displayMetrics.widthPixels
     private val screenHeight = Resources.getSystem().displayMetrics.heightPixels
-    private val paint: Paint
+    private val particlePaint = Paint()
+
+    private val trail: ParticleTrail
 
     init {
         xPosition = ThreadLocalRandom.current().nextFloat() * (screenWidth - r)
         yPosition = ThreadLocalRandom.current().nextFloat() * (screenHeight - r)
+
+        // Start moving in a random direction
         val theta = ThreadLocalRandom.current().nextFloat() * 2 * PI.toFloat()
         xVelocity = baseVelocity * cos(theta)
         yVelocity = baseVelocity * sin(theta)
-        paint = Paint()
-        paint.color = Color.parseColor("#FFFFFF")
+
+        val colour = getRandomColour("300")
+        particlePaint.color = colour
+        trail = ParticleTrail(r, colour)
     }
 
     fun draw(canvas: Canvas) {
-        canvas.drawCircle(xPosition, yPosition, r, paint)
+        canvas.drawCircle(xPosition, yPosition, r, particlePaint)
+        trail.draw(canvas)
     }
 
     fun update() {
@@ -52,6 +64,7 @@ class Particle {
         } else {
             continueStraight()
         }
+        trail.add(xPosition, yPosition)
     }
 
     /**
@@ -101,7 +114,7 @@ class Particle {
     fun startOrbit(x: Float, y: Float) {
         if (!inOrbit) {
             inOrbit = true
-            rOrbit = ThreadLocalRandom.current().nextFloat() * (screenWidth / 2)
+            rOrbit = ThreadLocalRandom.current().nextFloat() * (screenWidth / 2 - 100) + 100
         }
         xOrbit = x
         yOrbit = y
