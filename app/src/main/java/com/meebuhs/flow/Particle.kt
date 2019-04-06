@@ -21,6 +21,7 @@ class Particle(x: Float = -1f, y: Float = -1f) {
     private var xVelocity: Float
     private var yVelocity: Float
 
+    var orbitId: Int = 0
     private var inOrbit: Boolean = false
     private var xOrbit: Float = 0f
     private var yOrbit: Float = 0f
@@ -119,11 +120,15 @@ class Particle(x: Float = -1f, y: Float = -1f) {
     }
 
 
-    fun startOrbit(x: Float, y: Float) {
-        if (!inOrbit) {
-            inOrbit = true
-            rOrbit = ThreadLocalRandom.current().nextFloat() * (screenWidth / 2 - 100) + 100
-        }
+    fun setOrbit(x: Float, y: Float, id: Int) {
+        inOrbit = true
+        orbitId = id
+        rOrbit = ThreadLocalRandom.current().nextFloat() * (screenWidth / 2 - 100) + 100
+        xOrbit = x
+        yOrbit = y
+    }
+
+    fun moveOrbit(x: Float, y: Float) {
         xOrbit = x
         yOrbit = y
     }
