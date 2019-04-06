@@ -12,12 +12,12 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 
-class Particle {
+class Particle(x: Float = -1f, y: Float = -1f) {
     private var r: Float = 5f
     private var baseVelocity: Float = 20f
 
-    private var xPosition: Float
-    private var yPosition: Float
+    private var xPosition = x
+    private var yPosition = y
     private var xVelocity: Float
     private var yVelocity: Float
 
@@ -28,13 +28,12 @@ class Particle {
 
     private val screenWidth = Resources.getSystem().displayMetrics.widthPixels
     private val screenHeight = Resources.getSystem().displayMetrics.heightPixels
-    private val particlePaint = Paint()
 
+    private val particlePaint = Paint()
     private val trail: ParticleTrail
 
     init {
-        xPosition = ThreadLocalRandom.current().nextFloat() * (screenWidth - r)
-        yPosition = ThreadLocalRandom.current().nextFloat() * (screenHeight - r)
+        initialisePosition()
 
         // Start moving in a random direction
         val theta = ThreadLocalRandom.current().nextFloat() * 2 * PI.toFloat()
@@ -44,6 +43,15 @@ class Particle {
         val colour = getRandomColour("300")
         particlePaint.color = colour
         trail = ParticleTrail(r, colour)
+    }
+
+    private fun initialisePosition() {
+        if (xPosition == -1f) {
+            xPosition = ThreadLocalRandom.current().nextFloat() * (screenWidth - r)
+        }
+        if (yPosition == -1f) {
+            yPosition = ThreadLocalRandom.current().nextFloat() * (screenHeight - r)
+        }
     }
 
     fun draw(canvas: Canvas) {

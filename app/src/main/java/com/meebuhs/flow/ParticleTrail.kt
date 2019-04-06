@@ -28,13 +28,13 @@ class ParticleTrail(r: Float, colour: Int) {
     fun draw(canvas: Canvas) {
         if (size > 0) {
             trailPaint.shader = LinearGradient(
-                trail[0].first,
-                trail[0].second,
                 trail[size - 1].first,
                 trail[size - 1].second,
-                Color.TRANSPARENT,
+                trail[0].first,
+                trail[0].second,
                 trailPaint.color,
-                Shader.TileMode.REPEAT
+                Color.TRANSPARENT,
+                Shader.TileMode.MIRROR
             )
             trailPath.reset()
             var isFirst = true

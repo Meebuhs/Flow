@@ -54,8 +54,6 @@ class FieldView(context: Context, attributes: AttributeSet) : SurfaceView(contex
     }
 
     override fun performClick(): Boolean {
-        particles.add(Particle())
-
         return super.performClick()
     }
 
@@ -79,7 +77,10 @@ class FieldView(context: Context, attributes: AttributeSet) : SurfaceView(contex
             }
             MotionEvent.ACTION_UP -> {
                 if (System.currentTimeMillis() - lastTouchDown < clickActionTimeThreshold) {
-                    performClick()
+                    if (!performClick()) {
+                        particles.add(Particle(x, y))
+                    }
+
                 }
                 removeOrbits()
             }
