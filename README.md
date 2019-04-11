@@ -1,7 +1,10 @@
 # Flow
 
-A purely visual Android application which is built on the idea of having particles guided by a perlin noise field and is
- inspired by Dan Shiffman's video: https://www.youtube.com/watch?v=BjoM9oKOAKY
+A purely visual Android application which is built on the idea of having particles guided by a perlin noise field,
+inspired by Dan Shiffman's video: https://www.youtube.com/watch?v=BjoM9oKOAKY
+
+The noise implementation is a kotlin translation of Adrian Biagioli's C# implementation OctavePerlin:
+ http://flafla2.github.io/2014/08/09/perlinnoise.html
 
 ![flow demo](docs/flow-example.jpg)
 
