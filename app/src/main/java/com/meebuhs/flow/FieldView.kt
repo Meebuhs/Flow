@@ -6,6 +6,7 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import com.meebuhs.flow.Prefs.getEnum
 
 class FieldView(context: Context, attributes: AttributeSet) : SurfaceView(context, attributes), SurfaceHolder.Callback {
     private var lastTouchDown: Long
@@ -46,7 +47,7 @@ class FieldView(context: Context, attributes: AttributeSet) : SurfaceView(contex
     }
 
     fun update() {
-        for (particle in particles) particle.update()
+        for (particle in particles) particle.update(getMovementMode())
     }
 
     override fun draw(canvas: Canvas) {
@@ -55,15 +56,25 @@ class FieldView(context: Context, attributes: AttributeSet) : SurfaceView(contex
         for (particle in particles) particle.draw(canvas)
     }
 
-    override fun performClick(): Boolean {
-        return super.performClick()
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        val movementMode = getMovementMode()
+
+        return when (movementMode) {
+            Movement.STANDARD -> handleStandardTouchEvent(event)
+            Movement.PERLIN -> handlePerlinTouchEvent(event)
+        }
     }
 
-    override fun onTouchEvent(event: MotionEvent): Boolean {
+    private fun getMovementMode(): Movement {
+        val prefs = Prefs.getPrefs(this.context)
+        return prefs.getEnum(Constants.PREF_MOVEMENT, Movement.STANDARD)
+    }
+
+    private fun handleStandardTouchEvent(event: MotionEvent): Boolean {
         for (i in 0 until event.pointerCount) {
             /*
-             *  Current user interaction involves tapping the screen to add particles and creating an orbit by holding
-             *  down a finger on the screen, multiple held presses will create multiple orbits.
+             *  Current user interaction in standard mode involves tapping the screen to add particles and creating
+             *  multiple orbits by holding down any number of fingers on the screen
              */
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
@@ -81,7 +92,7 @@ class FieldView(context: Context, attributes: AttributeSet) : SurfaceView(contex
                 MotionEvent.ACTION_UP -> {
                     if (System.currentTimeMillis() - lastTouchDown < clickActionTimeThreshold) {
                         if (!performClick()) {
-                            particles.add(Particle(event.getX(i), event.getY(i)))
+                            particles.add(Particle(event.getX(i), event.getY(i), Movement.STANDARD))
                         }
                     }
                     clearOrbits()
@@ -98,6 +109,26 @@ class FieldView(context: Context, attributes: AttributeSet) : SurfaceView(contex
                         addOrbit(Vector(event.getX(i), event.getY(i)), event.getPointerId(i))
                     }
                 }
+            }
+        }
+        return true
+    }
+
+    private fun handlePerlinTouchEvent(event: MotionEvent): Boolean {
+        /*
+         *  Current user interaction simply allows the user to create particles by tapping the screen
+         */
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                lastTouchDown = System.currentTimeMillis()
+            }
+            MotionEvent.ACTION_UP -> {
+                if (System.currentTimeMillis() - lastTouchDown < clickActionTimeThreshold) {
+                    if (!performClick()) {
+                        particles.add(Particle(event.x, event.y, Movement.PERLIN))
+                    }
+                }
+                clearOrbits()
             }
         }
         return true

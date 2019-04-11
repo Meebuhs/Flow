@@ -14,10 +14,12 @@ import java.util.concurrent.ThreadLocalRandom
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.atan2
+import kotlin.math.cos
 import kotlin.math.floor
+import kotlin.math.sin
 
 
-class Particle(x: Float = -1f, y: Float = -1f) {
+class Particle(x: Float = -1f, y: Float = -1f, movementMode: Movement) {
     private var radius: Float = 5f
     private var baseVelocity: Float = 20f
     private var maxVelocity: Float = 20f
@@ -36,19 +38,17 @@ class Particle(x: Float = -1f, y: Float = -1f) {
 
     private val particlePaint = Paint()
     private val trail: ParticleTrail
-    // TODO: move perlin, timestep and increment out of particle
-    private val perlin = Perlin()
-    private var timeStep = 0.01
-    private val increment = 0.03
+
 
     init {
         initialisePosition()
 
-        // Start moving in a random direction
-        // TODO: This only happens in movement.STANDARD
-//        val theta = ThreadLocalRandom.current().nextFloat() * 2 * PI.toFloat()
-//        velocity.x = baseVelocity * cos(theta)
-//        velocity.y = baseVelocity * sin(theta)
+        if (movementMode == Movement.STANDARD) {
+            // Start moving in a random direction
+            val theta = ThreadLocalRandom.current().nextFloat() * 2 * PI.toFloat()
+            velocity.x = baseVelocity * cos(theta)
+            velocity.y = baseVelocity * sin(theta)
+        }
 
         val colour = getRandomColour("200")
         particlePaint.color = colour
@@ -69,49 +69,56 @@ class Particle(x: Float = -1f, y: Float = -1f) {
         trail.draw(canvas)
     }
 
-    fun update() {
-        // TODO: Hardcoded movement
-        when (Movement.PERLIN) {
+    fun update(movementMode: Movement) {
+        when (movementMode) {
             Movement.STANDARD -> {
-                if (inOrbit) {
-                    val delta = sub(orbitPosition, position)
-
-                    if (abs(dist(orbitPosition, position) - rOrbit) <= baseVelocity / 2) {
-                        orbit(delta)
-                    } else {
-                        travelToOrbit(delta)
-                    }
-                } else {
-                    continueStraight()
-                }
-                trail.add(position.x, position.y)
+                standardUpdate()
             }
             Movement.PERLIN -> {
-                // follow, update, edges, show
-                // TODO: hardcoded field scale
-                val gridPosition = Vector(floor(position.x / 20), floor(position.y / 20))
-
-                val angle = perlin.getOctavePerlin(
-                    gridPosition.x.toDouble() * increment,
-                    gridPosition.y.toDouble() * increment,
-                    timeStep,
-                    6,
-                    0.2
-                ) * PI * 8
-                val force = mult(fromAngle(angle.toFloat()), 5f)
-                acceleration.add(force)
-
-                position.add(velocity)
-                velocity.limit(maxVelocity)
-                velocity.add(acceleration)
-                acceleration.mult(0f)
-
-                wrapAroundEdges()
-
-                trail.add(position.x, position.y)
-                timeStep += 0.005
+                perlinUpdate()
             }
         }
+    }
+
+    private fun standardUpdate() {
+        if (inOrbit) {
+
+            val delta = sub(orbitPosition, position)
+
+            if (abs(dist(orbitPosition, position) - rOrbit) <= baseVelocity / 2) {
+                orbit(delta)
+            } else {
+                travelToOrbit(delta)
+            }
+        } else {
+            continueStraight()
+        }
+        trail.add(position.x, position.y)
+    }
+
+    private fun perlinUpdate() {
+        // TODO: hardcoded field scale
+        val gridPosition = Vector(floor(position.x / 20), floor(position.y / 20))
+
+        val angle = perlin.getOctavePerlin(
+            gridPosition.x.toDouble() * increment,
+            gridPosition.y.toDouble() * increment,
+            timeStep,
+            6,
+            0.2
+        ) * PI * 8
+        val force = mult(fromAngle(angle.toFloat()), 5f)
+        acceleration.add(force)
+
+        position.add(velocity)
+        velocity.limit(maxVelocity)
+        velocity.add(acceleration)
+        acceleration.mult(0f)
+
+        wrapAroundEdges()
+
+        trail.add(position.x, position.y)
+        timeStep += 0.005
     }
 
     /**
@@ -131,10 +138,10 @@ class Particle(x: Float = -1f, y: Float = -1f) {
         val theta = atan2(delta.y, delta.x)
 
         // If particle is within the orbit radius, travel outward
-        if (abs(mag(delta)) <= rOrbit) {
-            position = sub(position, mult(unitComponentsFromAngle(theta), baseVelocity))
+        position = if (abs(mag(delta)) <= rOrbit) {
+            sub(position, mult(unitComponentsFromAngle(theta), baseVelocity))
         } else {
-            position = add(position, mult(unitComponentsFromAngle(theta), baseVelocity))
+            add(position, mult(unitComponentsFromAngle(theta), baseVelocity))
 
         }
     }
@@ -160,7 +167,7 @@ class Particle(x: Float = -1f, y: Float = -1f) {
         inOrbit = true
         orbitId = id
         rOrbit = ThreadLocalRandom.current().nextFloat() * (screenWidth / 2 - 100) + 100
-        position = vector
+        orbitPosition = vector
     }
 
     fun moveOrbit(vector: Vector) {
