@@ -3,6 +3,9 @@ package com.meebuhs.flow
 import android.content.res.Resources
 import android.graphics.Canvas
 import android.graphics.Paint
+import com.meebuhs.flow.FieldView.Companion.increment
+import com.meebuhs.flow.FieldView.Companion.perlin
+import com.meebuhs.flow.FieldView.Companion.timeStep
 import com.meebuhs.flow.VectorUtils.Companion.add
 import com.meebuhs.flow.VectorUtils.Companion.dist
 import com.meebuhs.flow.VectorUtils.Companion.fromAngle

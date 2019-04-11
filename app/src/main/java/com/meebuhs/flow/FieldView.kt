@@ -200,4 +200,11 @@ class FieldView(context: Context, attributes: AttributeSet) : SurfaceView(contex
             ++counter
         }
     }
+
+    companion object {
+        val perlin = Perlin()
+        const val increment = 0.03
+        var timeStep = 0.0
+    }
+
 }
