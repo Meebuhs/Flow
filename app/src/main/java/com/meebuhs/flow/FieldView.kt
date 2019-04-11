@@ -13,7 +13,7 @@ class FieldView(context: Context, attributes: AttributeSet) : SurfaceView(contex
 
     private val thread: FieldThread
     private val particles: ArrayList<Particle> = arrayListOf()
-    private var orbits: MutableMap<Int, Pair<Float, Float>> = mutableMapOf()
+    private var orbits: MutableMap<Int, Vector> = mutableMapOf()
     private val orbitIds: ArrayList<Int> = arrayListOf()
     private val clickActionTimeThreshold = 100
 
@@ -72,9 +72,9 @@ class FieldView(context: Context, attributes: AttributeSet) : SurfaceView(contex
                 MotionEvent.ACTION_MOVE -> {
                     if (System.currentTimeMillis() - lastTouchDown > clickActionTimeThreshold) {
                         if (!orbitStarted) {
-                            setFirstOrbit(event.getX(i), event.getY(i), event.getPointerId(i))
+                            setFirstOrbit(Vector(event.getX(i), event.getY(i)), event.getPointerId(i))
                         } else {
-                            moveOrbit(event.getX(i), event.getY(i), event.getPointerId(i))
+                            moveOrbit(Vector(event.getX(i), event.getY(i)), event.getPointerId(i))
                         }
                     }
                 }
@@ -95,7 +95,7 @@ class FieldView(context: Context, attributes: AttributeSet) : SurfaceView(contex
                 MotionEvent.ACTION_POINTER_DOWN -> {
                     // Add a new orbit
                     if (event.actionIndex == i) {
-                        addOrbit(event.getX(i), event.getY(i), event.getPointerId(i))
+                        addOrbit(Vector(event.getX(i), event.getY(i)), event.getPointerId(i))
                     }
                 }
             }
@@ -103,22 +103,22 @@ class FieldView(context: Context, attributes: AttributeSet) : SurfaceView(contex
         return true
     }
 
-    private fun setFirstOrbit(x: Float, y: Float, id: Int) {
+    private fun setFirstOrbit(orbitPosition: Vector, id: Int) {
         for (particle in particles) {
-            particle.setOrbit(x, y, id)
+            particle.setOrbit(orbitPosition, id)
         }
         orbitStarted = true
-        orbits[id] = Pair(x, y)
+        orbits[id] = orbitPosition
         orbitIds.add(id)
     }
 
-    private fun moveOrbit(x: Float, y: Float, id: Int) {
+    private fun moveOrbit(orbitPosition: Vector, id: Int) {
         for (particle in particles) {
             if (particle.orbitId == id) {
-                particle.moveOrbit(x, y)
+                particle.moveOrbit(orbitPosition)
             }
         }
-        orbits[id] = Pair(x, y)
+        orbits[id] = orbitPosition
     }
 
     private fun clearOrbits() {
@@ -141,7 +141,7 @@ class FieldView(context: Context, attributes: AttributeSet) : SurfaceView(contex
             for (particle in particles) {
                 if (particle.orbitId == id) {
                     val orbitId = orbitIds[counter]
-                    particle.setOrbit(orbits[orbitId]!!.first, orbits[orbitId]!!.second, orbitId)
+                    particle.setOrbit(orbits[orbitId]!!, orbitId)
                     counter = (++counter) % orbitIds.size
                 }
             }
@@ -157,13 +157,13 @@ class FieldView(context: Context, attributes: AttributeSet) : SurfaceView(contex
     /**
      * Add a new orbit and reallocate some existing particles to the new orbit
      */
-    private fun addOrbit(x: Float, y: Float, id: Int) {
+    private fun addOrbit(orbitPosition: Vector, id: Int) {
         var counter = 0
-        orbits[id] = Pair(x, y)
+        orbits[id] = Vector(x, y)
         orbitIds.add(id)
         for (particle in particles) {
             if (counter == orbits.size) {
-                particle.setOrbit(x, y, id)
+                particle.setOrbit(orbitPosition, id)
                 counter = 0
             }
             ++counter
