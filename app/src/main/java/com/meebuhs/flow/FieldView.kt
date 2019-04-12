@@ -3,15 +3,21 @@ package com.meebuhs.flow
 import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet
+import android.util.Log
+import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import androidx.core.view.GestureDetectorCompat
 import com.meebuhs.flow.Prefs.getEnum
+import com.meebuhs.flow.VectorUtils.Companion.sub
+import kotlin.math.abs
 
 class FieldView(context: Context, attributes: AttributeSet) : SurfaceView(context, attributes), SurfaceHolder.Callback {
     private var lastTouchDown: Long
     private var orbitStarted = false
 
+    private var gestureDetector: GestureDetectorCompat
     private val thread: FieldThread
     private val particles: ArrayList<Particle> = arrayListOf()
     private var orbits: MutableMap<Int, Vector> = mutableMapOf()
@@ -21,6 +27,7 @@ class FieldView(context: Context, attributes: AttributeSet) : SurfaceView(contex
     init {
         holder.addCallback(this)
         thread = FieldThread(holder, this)
+        gestureDetector = GestureDetectorCompat(this.context, OnGestureListener())
         lastTouchDown = System.currentTimeMillis()
     }
 
@@ -47,7 +54,8 @@ class FieldView(context: Context, attributes: AttributeSet) : SurfaceView(contex
     }
 
     fun update() {
-        for (particle in particles) particle.update(getMovementMode())
+        val movementMode = getMovementMode()
+        for (particle in particles) particle.update(movementMode)
     }
 
     override fun draw(canvas: Canvas) {
@@ -57,8 +65,9 @@ class FieldView(context: Context, attributes: AttributeSet) : SurfaceView(contex
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        val movementMode = getMovementMode()
+        gestureDetector.onTouchEvent(event)
 
+        val movementMode = getMovementMode()
         return when (movementMode) {
             Movement.STANDARD -> handleStandardTouchEvent(event)
             Movement.PERLIN -> handlePerlinTouchEvent(event)
@@ -198,6 +207,33 @@ class FieldView(context: Context, attributes: AttributeSet) : SurfaceView(contex
                 counter = 0
             }
             ++counter
+        }
+    }
+
+    private class OnGestureListener : GestureDetector.SimpleOnGestureListener() {
+        private val SWIPE_MAX_OFF_PATH = 250
+        private val SWIPE_MIN_DISTANCE = 200
+        private val SWIPE_THRESHOLD_VELOCITY = 500
+
+        override fun onDown(event: MotionEvent): Boolean {
+            return true
+        }
+
+        override fun onFling(event1: MotionEvent, event2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+            val e1Position = Vector(event1.x, event1.y)
+            val e2Position = Vector(event2.x, event2.y)
+            val delta = sub(e1Position, e2Position)
+
+            if (abs(delta.x) < SWIPE_MAX_OFF_PATH) {
+                if (abs(delta.y) > SWIPE_MIN_DISTANCE && abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
+                    if (delta.y < 0) {
+                        // TODO: Create settings and open them via this gesture
+                        Log.d("Gesture", "Swiped down")
+                        return true
+                    }
+                }
+            }
+            return false
         }
     }
 
